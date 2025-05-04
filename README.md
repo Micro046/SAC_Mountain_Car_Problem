@@ -13,7 +13,6 @@ The **Mountain Car Continuous** environment involves driving a car up a steep hi
 * **Observation space**: Continuous `[position, velocity]`
 * **Action space**: Continuous throttle force
 * **Reward**: +100 for reaching the goal, otherwise -1 per timestep
-* **Max steps per episode**: 2000
 
 ---
 
