@@ -1,0 +1,60 @@
+Algorithm: **Umbrella-SAC with Density Estimation (model-free)**
+
+**Inputs:**
+• Policy parameters θ
+• Q-function parameters φ₁, φ₂
+• Density estimator parameters ψ
+• Hyperparameters: discount γ, temperature α, density-weight β, Polyak coefficient ρ
+• Batch sizes: N (RL), N_d (density)
+
+**Initialization:**
+Set target Q-network parameters:
+ φ_{targ,1} ← φ₁
+ φ_{targ,2} ← φ₂
+
+---
+
+### **For j in range(number of iterations):**
+
+1. **Sample transitions**
+   • Sample states s from proposal distribution m(s)
+   • Sample actions a uniformly from the action space
+   • Apply one-step dynamics to obtain r, s', d
+   • Form batch B = {(s, a, r, s', d)}
+
+2. **Compute state-entropy bonus**
+   • Estimate log-density log d_ψ(s) for each s in B
+   • Define modified rewards:
+     r' = r − β · log d_ψ(s)
+
+3. **Compute Q-targets using r'**
+   y(r', s', d) = r' + γ(1 − d) ·
+     E_{\tilde{a}' ~ π_θ(·|s')} [
+      min(Q_{φ_{targ,1}}(s', ˜a'), Q_{φ_{targ,2}}(s', ˜a'))
+      − α log π_θ(˜a' | s')
+     ]
+
+4. **Update Q-functions**
+   For i = 1,2:
+   ∇_{φᵢ} (1/|B|) Σ_{(s,a,r',s',d) ∈ B}
+     [ Q_{φᵢ}(s,a) − y(r', s', d) ]²
+
+5. **Update policy parameters θ**
+   ∇_θ (1/|B|) Σ_{s ∈ B}
+     E_{˜a(s) ~ π_θ(·|s)} [
+      min(Q_{φ₁}(s,˜a(s)), Q_{φ₂}(s,˜a(s)))
+      − α log π_θ(˜a(s) | s)
+     ]
+   where ˜a(s) is reparameterized to be differentiable w.r.t. θ.
+
+6. **(Optional) Update temperature α** toward target entropy via gradient descent.
+
+7. **Update density estimator parameters ψ**
+   • Take one gradient descent step on density-estimation objective:
+     L_{dens}(ψ; θ)
+   • Use its own batch of N_d samples.
+
+8. **Update target Q-networks (Polyak averaging)**
+   φ_{targ,i} ← ρ φ_{targ,i} + (1 − ρ) φᵢ,  for i = 1,2
+
+
